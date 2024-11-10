@@ -1,0 +1,9 @@
+Flask
+gunicorn
+google-cloud-storage
+google-auth
+google-generativeai
+google-cloud
+google-api-core
+six
+pyrebase4
