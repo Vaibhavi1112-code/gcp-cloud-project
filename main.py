@@ -11,6 +11,12 @@ from urllib3.contrib import appengine
 import six.moves
 import traceback
 
+storage_client = storage.Client()
+bucket_name = 'vaibhavipanchal-project1'
+bucket = storage_client.bucket(bucket_name)
+j_blob = bucket.blob('files/photosaver-435516-e3a398728fa3.json')
+j_blob.download_to_filename('photosaver-435516-e3a398728fa3.json')
+
 # Firebase configuration
 firebaseConfig = {
     "apiKey": "AIzaSyDGO3CeXs4kHI5---bqW23SZXLHS00y6sA",
@@ -43,10 +49,6 @@ model = genai.GenerativeModel(
   model_name="gemini-1.5-flash",
   generation_config=generation_config,
 )
-
-storage_client = storage.Client()
-bucket_name = 'vaibhavipanchal-project1'
-bucket = storage_client.bucket(bucket_name)
 
 def upload_to_gemini(file, mime_type=None):
     #get_response = requests.get(image_url)
