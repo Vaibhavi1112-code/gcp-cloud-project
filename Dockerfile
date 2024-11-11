@@ -11,10 +11,10 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 8080 available to the world outside the container
-EXPOSE 8080
+EXPOSE 5000
 
 # Define environment variable
-ENV PORT=8080
+ENV PORT=5000
 
 # Run the application
 CMD ["python", "main.py"]
