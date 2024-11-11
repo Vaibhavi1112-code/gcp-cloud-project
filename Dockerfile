@@ -2,10 +2,10 @@
 FROM python:3.9-slim
 
 # Set the working directory in the container
-WORKDIR /app
+WORKDIR /home/vaibhavipanchal3524/helloworld-python/app1-tutorial/
 
 # Copy the current directory contents into the container
-COPY . /app
+COPY . /home/vaibhavipanchal3524/helloworld-python/app1-tutorial/
 
 # Install the required Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
