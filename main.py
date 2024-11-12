@@ -14,12 +14,13 @@ import traceback
 storage_client = storage.Client()
 bucket_name = 'vaibhavipanchal-project1'
 bucket = storage_client.bucket(bucket_name)
-j_blob = bucket.blob('files/photosaver-435516-e3a398728fa3.json')
-j_blob.download_to_filename('photosaver-435516-e3a398728fa3.json')
+bucket.blob('files/photosaver-435516-e3a398728fa3.json').download_to_filename('photosaver-435516-e3a398728fa3.json')
+firebase_apikey = bucket.blob('files/firebase_apikey.txt').download_as_text()
+gemini_apikey = bucket.blob('files/gemini_apikey.txt').download_as_text()
 
 # Firebase configuration
 firebaseConfig = {
-    "apiKey": "AIzaSyDGO3CeXs4kHI5---bqW23SZXLHS00y6sA",
+    "apiKey": f"{firebase_apikey}",
     "authDomain": "photosaver-435516.firebaseapp.com",
     "projectId": "photosaver-435516",
     "storageBucket": "photosaver-435516.appspot.com",
@@ -33,7 +34,7 @@ auth = firebase.auth()
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-genai.configure(api_key='AIzaSyB84nAbRVuhliETOyd0OTNQeAzTz0GP-N4')
+genai.configure(api_key=f"{gemini_apikey}")
 #genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 # Create the model
@@ -225,6 +226,7 @@ def index():
                 <button class="logout-button">Logout</button>
             </a>
         </div>
+        <body style="background-color: rgb(64, 224, 208);">
         <form method="post" enctype="multipart/form-data" action="/upload">
             <div>
                 <label for="file">Choose file to upload</label>
@@ -343,6 +345,7 @@ def login_html():
         <h1>Login to Photo App</h1>
     </header>
     <main> 
+        <body style="background-color: rgb(64, 224, 208);">
         <h2>Please login to the Photo App</h2><br>
         <form method="post" action="/login">
             <div>
@@ -429,3 +432,4 @@ def get_file(filename):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
+
