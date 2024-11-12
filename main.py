@@ -226,7 +226,7 @@ def index():
                 <button class="logout-button">Logout</button>
             </a>
         </div>
-        <body style="background-color: rgb(64, 224, 208);">
+        <body style="background-color: rgb(255, 204, 0);">
         <form method="post" enctype="multipart/form-data" action="/upload">
             <div>
                 <label for="file">Choose file to upload</label>
@@ -345,7 +345,7 @@ def login_html():
         <h1>Login to Photo App</h1>
     </header>
     <main> 
-        <body style="background-color: rgb(64, 224, 208);">
+        <body style="background-color: rgb(255, 204, 0);">
         <h2>Please login to the Photo App</h2><br>
         <form method="post" action="/login">
             <div>
