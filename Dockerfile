@@ -12,10 +12,10 @@ COPY . /home/vaibhavipanchal3524/helloworld-python/app1-tutorial/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 8080 available to the world outside the container
-EXPOSE 5000
+EXPOSE 8080
 
 # Define environment variable
-ENV PORT=5000
+ENV PORT=8080
 
 # Run the application
 CMD ["python", "main.py"]
