@@ -52,11 +52,7 @@ model = genai.GenerativeModel(
 )
 
 def upload_to_gemini(file, mime_type=None):
-    #get_response = requests.get(image_url)
-    #if get_response.status_code != 200:
-    #    raise Exception(f"Failed to download image from GCS: {get_response.status_code}")
     file.seek(0)
-    #response = genai.upload_file(file, mime_type=mime_type)
     response = genai.upload_file(io.BytesIO(file.read()), mime_type=file.content_type)
     print("file uploaded to Gemini")
     return response
@@ -101,9 +97,6 @@ def index():
     if auth.current_user:
         current_user = session['email'].split('@')[0]
         blobs = bucket.list_blobs(prefix=current_user + '/')
-        #blobs = bucket.list_blobs()
-        #files = [blob.name.split('/')[-1] for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
-        #files = [blob.name for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
         files = [(blob.name, blob.name.split('/')[-1]) for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
         index_html = '''
 <!doctype html>
@@ -249,7 +242,6 @@ def index():
         for full_path, filename in files:
             index_html += f'<li><a href="/files/{full_path}">{filename}</a></li>'
         index_html += '</ul>'
-        #return render_template_string(index_html)
         response = make_response(index_html)  # Create a response with the HTML content
         response.headers['Cache-Control'] = 'no-store'  # Disable caching
         response.headers['Pragma'] = 'no-cache'  # Disable caching
