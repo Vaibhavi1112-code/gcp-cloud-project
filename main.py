@@ -219,7 +219,7 @@ def index():
                 <button class="logout-button">Logout</button>
             </a>
         </div>
-        <body style="background-color: rgb(255, 204, 0);">
+        <body style="background-color: rgb(51, 204, 254);">
         <form method="post" enctype="multipart/form-data" action="/upload">
             <div>
                 <label for="file">Choose file to upload</label>
@@ -337,7 +337,7 @@ def login_html():
         <h1>Login to Photo App</h1>
     </header>
     <main> 
-        <body style="background-color: rgb(255, 204, 0);">
+        <body style="background-color: rgb(51, 204, 254);">
         <h2>Please login to the Photo App</h2><br>
         <form method="post" action="/login">
             <div>
@@ -399,6 +399,7 @@ def upload():
         print(gemini_response)
 
         chat_session = model.start_chat()
+        chat_session.send_message("Hello!")
         chat_session.send_message(gemini_response[0])
         response = chat_session.send_message("Give a caption and a short description of uploaded image in JSON format")
         print(response.text)
