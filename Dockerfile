@@ -1,7 +1,7 @@
 
 FROM python:3.9-slim
 
-WORKDIR /photossaver/
+WORKDIR /photosaver/
 
 COPY . /photosaver/
 
