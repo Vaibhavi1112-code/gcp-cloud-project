@@ -98,9 +98,9 @@ def download_file(filename):
 def index():
     if auth.current_user:
         user_id = session.get('usr')
-        db.collection('sessions').document(user_id).update({
+        db.collection('sessions').document(user_id).set({
             'logged_in': True
-        })
+        }, merge=True)
     user_id = session.get('usr')
     if True:    
         if user_id:
