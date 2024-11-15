@@ -96,29 +96,35 @@ def download_file(filename):
 
 @app.route('/')
 def index():
-    if 'usr' not in session:  # Ensure the user is logged in
-        return redirect('/login.html')
-
     if auth.current_user:
         user_id = session.get('usr')
+        db.collection('sessions').document(user_id).update({
+            'logged_in': True
+        })
+    user_id = session.get('usr')
+    if True:    
         if user_id:
             user_session = db.collection('sessions').document(user_id).get()
             if user_session.exists:
                 session_data = user_session.to_dict()
-                last_active = session_data.get('last_active')
-                expiration_time = last_active + timedelta(minutes=SESSION_EXPIRATION_MINUTES)
-                current_time = datetime.now(EASTERN_TIMEZONE)
-                if current_time > expiration_time:
-                    db.collection('sessions').document(user_id).delete()
-                    session.pop('user_id', None)
-                    return redirect('/login.html')
-                db.collection('sessions').document(user_id).update({
-                    'last_active': datetime.now(EASTERN_TIMEZONE)
-                })
-                current_user = session['email'].split('@')[0]
-                blobs = bucket.list_blobs(prefix=current_user + '/')
-                files = [(blob.name, blob.name.split('/')[-1]) for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
-                index_html = '''
+                login_status = session_data.get('logged_in', False)
+                if login_status:
+                    last_active = session_data.get('last_active')
+                    expiration_time = last_active + timedelta(minutes=SESSION_EXPIRATION_MINUTES)
+                    current_time = datetime.now(EASTERN_TIMEZONE)
+                    if current_time > expiration_time:
+                        db.collection('sessions').document(user_id).update({
+                            'logged_in': False
+                        })
+                        session.pop('user_id', None)
+                        return redirect('/login.html')
+                    db.collection('sessions').document(user_id).update({
+                        'last_active': datetime.now(EASTERN_TIMEZONE)
+                    })
+                    current_user = session['email'].split('@')[0]
+                    blobs = bucket.list_blobs(prefix=current_user + '/')
+                    files = [(blob.name, blob.name.split('/')[-1]) for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
+                    index_html = '''
 <!doctype html>
 <html lang="en">
 <head>
@@ -259,15 +265,17 @@ def index():
 
 '''
 
-                for full_path, filename in files:
-                    index_html += f'<li><a href="/files/{full_path}">{filename}</a></li>'
-                index_html += '</ul>'
-                response = make_response(index_html)  # Create a response with the HTML content
-                response.headers['Cache-Control'] = 'no-store'  # Disable caching
-                response.headers['Pragma'] = 'no-cache'  # Disable caching
-                response.headers['Expires'] = '0'  # Disable caching
+                    for full_path, filename in files:
+                        index_html += f'<li><a href="/files/{full_path}">{filename}</a></li>'
+                    index_html += '</ul>'
+                    response = make_response(index_html)  # Create a response with the HTML content
+                    response.headers['Cache-Control'] = 'no-store'  # Disable caching
+                    response.headers['Pragma'] = 'no-cache'  # Disable caching
+                    response.headers['Expires'] = '0'  # Disable caching
 
-                return response  # Return the response
+                    return response  # Return the response
+                else:
+                    return redirect('/login.html')
             else:
                 return redirect('/login.html')
         else:
@@ -412,7 +420,9 @@ def login():
 def logout():
     user_id = session.pop('usr', None)
     if user_id:
-        db.collection('sessions').document(user_id).delete() 
+         db.collection('sessions').document(user_id).update({
+            'logged_in': False
+        })
     response = redirect('/login.html') 
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Pragma'] = 'no-cache'  
