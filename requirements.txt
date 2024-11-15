@@ -7,3 +7,6 @@ google-cloud
 google-api-core
 six
 pyrebase4
+grpcio-tools
+google-cloud-firestore
+grpcio

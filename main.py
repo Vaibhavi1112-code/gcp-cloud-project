@@ -5,11 +5,13 @@ from google.cloud import storage
 import datetime
 import requests
 import json
-
+from google.cloud import firestore
 import pyrebase
 from urllib3.contrib import appengine
 import six.moves
 import traceback
+from datetime import datetime, timedelta
+import pytz 
 
 storage_client = storage.Client()
 bucket_name = 'vaibhavipanchal-project1'
@@ -32,7 +34,10 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 auth = firebase.auth()
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = bucket.blob('files/app_secret_key.txt').download_as_text()
+db = firestore.Client(database='photosaver')
+SESSION_EXPIRATION_MINUTES = 5
+EASTERN_TIMEZONE = pytz.timezone("America/New_York")
 
 genai.configure(api_key=f"{gemini_apikey}")
 #genai.configure(api_key=os.environ["GEMINI_API_KEY"])
@@ -95,10 +100,25 @@ def index():
         return redirect('/login.html')
 
     if auth.current_user:
-        current_user = session['email'].split('@')[0]
-        blobs = bucket.list_blobs(prefix=current_user + '/')
-        files = [(blob.name, blob.name.split('/')[-1]) for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
-        index_html = '''
+        user_id = session.get('usr')
+        if user_id:
+            user_session = db.collection('sessions').document(user_id).get()
+            if user_session.exists:
+                session_data = user_session.to_dict()
+                last_active = session_data.get('last_active')
+                expiration_time = last_active + timedelta(minutes=SESSION_EXPIRATION_MINUTES)
+                current_time = datetime.now(EASTERN_TIMEZONE)
+                if current_time > expiration_time:
+                    db.collection('sessions').document(user_id).delete()
+                    session.pop('user_id', None)
+                    return redirect('/login.html')
+                db.collection('sessions').document(user_id).update({
+                    'last_active': datetime.now(EASTERN_TIMEZONE)
+                })
+                current_user = session['email'].split('@')[0]
+                blobs = bucket.list_blobs(prefix=current_user + '/')
+                files = [(blob.name, blob.name.split('/')[-1]) for blob in blobs if blob.name.endswith(('.jpeg', '.jpg', '.png', '.txt'))]
+                index_html = '''
 <!doctype html>
 <html lang="en">
 <head>
@@ -219,7 +239,7 @@ def index():
                 <button class="logout-button">Logout</button>
             </a>
         </div>
-        <body style="background-color: rgb(60, 153, 51);">
+        <body style="background-color: rgb(255, 204, 0);">
         <form method="post" enctype="multipart/form-data" action="/upload">
             <div>
                 <label for="file">Choose file to upload</label>
@@ -239,15 +259,19 @@ def index():
 
 '''
 
-        for full_path, filename in files:
-            index_html += f'<li><a href="/files/{full_path}">{filename}</a></li>'
-        index_html += '</ul>'
-        response = make_response(index_html)  # Create a response with the HTML content
-        response.headers['Cache-Control'] = 'no-store'  # Disable caching
-        response.headers['Pragma'] = 'no-cache'  # Disable caching
-        response.headers['Expires'] = '0'  # Disable caching
+                for full_path, filename in files:
+                    index_html += f'<li><a href="/files/{full_path}">{filename}</a></li>'
+                index_html += '</ul>'
+                response = make_response(index_html)  # Create a response with the HTML content
+                response.headers['Cache-Control'] = 'no-store'  # Disable caching
+                response.headers['Pragma'] = 'no-cache'  # Disable caching
+                response.headers['Expires'] = '0'  # Disable caching
 
-        return response  # Return the response
+                return response  # Return the response
+            else:
+                return redirect('/login.html')
+        else:
+            return redirect('/login.html')
     else:
         return redirect('/login.html')
   
@@ -337,7 +361,7 @@ def login_html():
         <h1>Login to Photo App</h1>
     </header>
     <main> 
-        <body style="background-color: rgb(60, 153, 51);">
+        <body style="background-color: rgb(255, 204, 0);">
         <h2>Please login to the Photo App</h2><br>
         <form method="post" action="/login">
             <div>
@@ -372,6 +396,12 @@ def login():
         user_id = user['idToken']
         session['usr'] = user_id
         session['email'] = email
+
+        db.collection('sessions').document(user_id).set({
+            'logged_in': True,
+            'last_active': datetime.now(EASTERN_TIMEZONE)
+        })
+
         return redirect('/')
     except Exception as e:
         print(f"Error during login: {str(e)}")
@@ -380,7 +410,9 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('usr', None)
+    user_id = session.pop('usr', None)
+    if user_id:
+        db.collection('sessions').document(user_id).delete() 
     response = redirect('/login.html') 
     response.headers['Cache-Control'] = 'no-store'
     response.headers['Pragma'] = 'no-cache'  
@@ -425,4 +457,3 @@ def get_file(filename):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
-
